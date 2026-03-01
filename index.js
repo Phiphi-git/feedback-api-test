@@ -46,6 +46,36 @@ async function initDatabase() {
     }
 }
 
+// ========== SERVICE ML ==========
+
+// Appeler le service ML pour analyser un sentiment
+async function analyzeSentimentWithML(feedbackText) {
+    try {
+        const mlServiceUrl = process.env.SENTIMENT_API_URL ||
+            'http://ml-service:8080';
+
+        const response = await fetch(`${mlServiceUrl}/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: feedbackText }),
+            timeout: 10000
+        });
+
+        if (!response.ok) {
+            throw new Error(`ML Service returned ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.warn('⚠️  ML Service unavailable:', error.message);
+        return {
+            sentiment: 'unknown',
+            confidence: 0,
+            error: 'ML service not available'
+        };
+    }
+}
+
 // ========== ROUTES ==========
 
 // 1. Health Check - TOUJOURS disponible
@@ -280,7 +310,119 @@ app.get('/api/export/json', async (req, res) => {
     }
 });
 
-// 404 Handler
+// 9. Analyser le sentiment d'un feedback spécifique
+app.get('/api/feedbacks/:id/sentiment', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, error: 'ID invalide' });
+        }
+
+        const connection = await pool.getConnection();
+        const [rows] = await connection.query(
+            'SELECT id, comment, username FROM raw_feedback WHERE id = ?',
+            [id]
+        );
+        connection.release();
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Feedback non trouvé' });
+        }
+
+        const feedback = rows[0];
+        const sentiment = await analyzeSentimentWithML(feedback.comment);
+
+        res.json({
+            success: true,
+            feedback: {
+                id: feedback.id,
+                username: feedback.username,
+                text: feedback.comment
+            },
+            sentiment: sentiment
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 10. Analyser les sentiments de tous les feedbacks d'un utilisateur
+app.get('/api/feedbacks-by-user/:username/sentiments', async (req, res) => {
+    try {
+        const username = req.params.username;
+
+        const connection = await pool.getConnection();
+        const [rows] = await connection.query(
+            'SELECT id, comment FROM raw_feedback WHERE username = ? ORDER BY feedback_date DESC',
+            [username]
+        );
+        connection.release();
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Utilisateur non trouvé' });
+        }
+
+        // Analyser tous les feedbacks
+        const sentiments = await Promise.all(
+            rows.map(async (row) => ({
+                id: row.id,
+                text: row.comment,
+                sentiment: await analyzeSentimentWithML(row.comment)
+            }))
+        );
+
+        res.json({
+            success: true,
+            username: username,
+            feedbackCount: rows.length,
+            sentiments: sentiments
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 11. Analyser les sentiments de tous les feedbacks
+app.get('/api/feedbacks/analysis/all-sentiments', async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        const [rows] = await connection.query(
+            'SELECT id, comment, username FROM raw_feedback LIMIT ?',
+            [parseInt(req.query.limit) || 100]
+        );
+        connection.release();
+
+        // Analyser tous les feedbacks
+        const analysis = await Promise.all(
+            rows.map(async (row) => ({
+                id: row.id,
+                username: row.username,
+                text: row.comment,
+                sentiment: await analyzeSentimentWithML(row.comment)
+            }))
+        );
+
+        // Statistiques
+        const stats = {
+            total: analysis.length,
+            positif: analysis.filter(a => a.sentiment.sentiment === 'positif').length,
+            neutre: analysis.filter(a => a.sentiment.sentiment === 'neutre').length,
+            négatif: analysis.filter(a => a.sentiment.sentiment === 'négatif').length,
+            unknown: analysis.filter(a => a.sentiment.sentiment === 'unknown').length
+        };
+
+        res.json({
+            success: true,
+            stats: stats,
+            feedbacks: analysis
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 404 - Route non trouvée
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -289,10 +431,13 @@ app.use((req, res) => {
             'GET /api/health',
             'GET /api/feedbacks?page=1&limit=50',
             'GET /api/feedbacks/:id',
+            'GET /api/feedbacks/:id/sentiment',
             'GET /api/feedbacks-by-user/:username',
+            'GET /api/feedbacks-by-user/:username/sentiments',
             'GET /api/campaign/:campaignId',
             'GET /api/search/:keyword',
             'GET /api/stats',
+            'GET /api/feedbacks/analysis/all-sentiments?limit=100',
             'GET /api/export/json'
         ]
     });

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # API Node.js
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feedback-api
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=34.155.20.62
+      - DB_USER=root
+      - DB_PASSWORD=test
+      - DB_NAME=test
+      - NODE_ENV=production
+      - SENTIMENT_API_URL=http://ml-service:8080
+    depends_on:
+      - ml-service
+    networks:
+      - feedback-network
+
+  # Service ML (Python)
+  ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    container_name: sentiment-ml
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - FLASK_ENV=production
+    networks:
+      - feedback-network
+    volumes:
+      - ./sentiment_model.pkl:/app/sentiment_model.pkl
+
+networks:
+  feedback-network:
+    driver: bridge
