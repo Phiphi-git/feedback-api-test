@@ -1,4 +1,4 @@
-# 📊 Feedback API
+# 📊 DJP COMPANY
 
 Une API Node.js pour collecter, analyser et afficher les retours clients avec support du Machine Learning optionnel.
 
