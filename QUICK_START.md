@@ -1,6 +1,6 @@
 # 🎯 RÉSUMÉ - TES 3 ÉTAPES FACILES
 
-## Tu dois exécuter (dans l'ordre) :
+## Tu dois exécuter (dans l'ordre)
 
 ```
 1️⃣  .\train-ml-model.ps1
@@ -24,7 +24,8 @@
 
 ## 💾 Fichiers crées/modifiés
 
-### ✅ FAIT (par moi):
+### ✅ FAIT (par moi)
+
 - `00_CE_QUE_TU_DOIS_FAIRE.md` - Ce guide détaillé
 - `DEPLOIEMENT_ML_CLOUD.md` - Architecture & options avancées
 - `train-ml-model.ps1` - Script d'entraînement
@@ -35,7 +36,8 @@
 - `docker-compose.yml` - Orchestration des 2 services
 - Tous les fichiers ML (`.py`, `requirements_ml.txt`)
 
-### ❌ À FAIRE (par toi):
+### ❌ À FAIRE (par toi)
+
 1. Lancer `.\train-ml-model.ps1`
 2. Lancer `.\test-local.ps1` (optionnel mais recommandé)
 3. Lancer `.\deploy-to-cloud.ps1 -ProjectId YOUR_PROJECT_ID`
@@ -45,21 +47,24 @@
 ## 🔑 Besoin de quoi ?
 
 **Pour l'étape 1 (Entraînement):**
+
 - Python 3.x (si pas installé, télécharge depuis python.org)
 - Internet (pour pip install les dépendances)
 
 **Pour l'étape 2 (Tests locaux):**
+
 - Docker Desktop actif
 - Internet
 
 **Pour l'étape 3 (Déploiement cloud):**
+
 - `gcloud` CLI installé ([ici](https://cloud.google.com/sdk/docs/install-sdk))
 - Compte Google Cloud actif
 - Ton Project ID (visible dans [console.cloud.google.com](https://console.cloud.google.com))
 
 ---
 
-## 🚀 Après le déploiement, tu auras:
+## 🚀 Après le déploiement, tu auras
 
 ```
 Google Cloud Services
@@ -83,7 +88,7 @@ Google Cloud Services
 
 ---
 
-## 📊 Pendant la présentation:
+## 📊 Pendant la présentation
 
 Tu peux montrer:
 
@@ -95,11 +100,12 @@ Tu peux montrer:
 
 ---
 
-## ⚡ Pour de l'aide rapide:
+## ⚡ Pour de l'aide rapide
 
 Ouvre le fichier: `00_CE_QUE_TU_DOIS_FAIRE.md`
 
 C'est un guide complet et détaillé avec:
+
 - Instructions étape par étape
 - Résultats attendus
 - Troubleshooting
