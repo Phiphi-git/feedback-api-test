@@ -257,7 +257,35 @@ app.get('/api/search/:keyword', async (req, res) => {
     }
 });
 
-// 7. Statistiques
+// 7. Analyser le sentiment d'un texte (ML)
+app.post('/api/analyze', async (req, res) => {
+    try {
+        const { text } = req.body;
+
+        if (!text || text.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Texte requis pour l\'analyse'
+            });
+        }
+
+        const sentiment = await analyzeSentimentWithML(text);
+
+        res.json({
+            success: true,
+            text: text,
+            sentiment: sentiment,
+            mlServiceUrl: process.env.SENTIMENT_API_URL || 'http://ml-service:8080'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// 8. Statistiques
 app.get('/api/stats', async (req, res) => {
     try {
         if (!pool) {
@@ -288,7 +316,7 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
-// 8. Exporter en JSON
+// 9. Exporter en JSON
 app.get('/api/export/json', async (req, res) => {
     try {
         if (!pool) {
@@ -310,7 +338,7 @@ app.get('/api/export/json', async (req, res) => {
     }
 });
 
-// 9. Analyser le sentiment d'un feedback spécifique
+// 10. Analyser le sentiment d'un feedback spécifique
 app.get('/api/feedbacks/:id/sentiment', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -347,7 +375,7 @@ app.get('/api/feedbacks/:id/sentiment', async (req, res) => {
     }
 });
 
-// 10. Analyser les sentiments de tous les feedbacks d'un utilisateur
+// 11. Analyser les sentiments de tous les feedbacks d'un utilisateur
 app.get('/api/feedbacks-by-user/:username/sentiments', async (req, res) => {
     try {
         const username = req.params.username;
@@ -383,7 +411,7 @@ app.get('/api/feedbacks-by-user/:username/sentiments', async (req, res) => {
     }
 });
 
-// 11. Analyser les sentiments de tous les feedbacks
+// 12. Analyser les sentiments de tous les feedbacks
 app.get('/api/feedbacks/analysis/all-sentiments', async (req, res) => {
     try {
         const connection = await pool.getConnection();
